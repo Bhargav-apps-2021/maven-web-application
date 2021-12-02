@@ -1,0 +1,94 @@
+pipeline{
+
+agent any
+tools{
+maven 'maven3.8.4'
+}
+
+triggers {
+  pollSCM('* * * * *')
+}
+
+options {
+//Discard Old Build  
+  buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5'))
+  //Add timestamp to the console o/p
+  timestamps()
+}
+
+ stages{ 
+    stage('CheckoutCode'){
+	 steps{
+	  git branch: 'development', credentialsId: '85c367ca-b474-4595-8659-8ba25a1e5dd3', url: 'https://github.com/Bhargav-apps-2021/maven-web-application.git'
+	 }
+	}
+	
+	stage('Build'){
+	 steps{	 
+	 sh "mvn clean package"
+	 }
+	}
+	
+	//This stage will execute the Sonarqube Report
+	stage('SonarQubeReport'){
+	 steps{	 
+	 sh "mvn sonar:sonar"
+	 }
+	} 
+	
+	//This stage will upload artifacts - maven-web-application into NEXUS 
+	stage('UploadArtifactsintoNexus'){
+	 steps{	 
+	 sh "mvn deploy"
+	 }
+	} 
+	
+	//This stage will upload artifactsinto Tomcat Server
+	stage('UploadAppIntoTomcatServer'){
+	 steps{	 
+	 
+	 sshagent(['3c180bf6-8ec9-4e03-8ad3-7e17a7b54fe4']) {
+  sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@52.66.250.169:/opt/apache-tomcat-9.0.54/webapps"
+  }	
+	}
+   } 
+	
+ }//stage Closed
+ 
+ post {
+  always {
+   emailext body: '''Build Over ..
+
+
+   Regards,
+   Mannem Bhargav.''', subject: 'Build Over', to: 'bhargavmannem136@gmail.com'
+    
+  }
+  aborted {
+   emailext body: '''Build canceled ..
+
+
+   Regards,
+   Mannem Bhargav.''', subject: 'Build canceled', to: 'bhargavmannem136@gmail.com'
+    
+  }
+  success {
+   emailext body: '''Build Success ..
+
+
+   Regards,
+   Mannem Bhargav.''', subject: 'Build Success', to: 'bhargavmannem136@gmail.com'
+   
+  }
+  failure {
+   emailext body: '''Build Failed ..
+
+
+   Regards,
+   Mannem Bhargav.''', subject: 'Build Failed', to: 'bhargavmannem136@gmail.com'
+    
+  }
+}
+ 
+ 
+}//Pipeline Closing
