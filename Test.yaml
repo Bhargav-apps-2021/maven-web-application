@@ -1,0 +1,16 @@
+apiVersion: 
+kind:
+metadata:
+spec:
+ replicaset-definition.yml
+ ReplicaSet
+name: myapp-replicaset
+labels:
+app: myapp
+type: front-end bata
+apps/v1
+metadata:
+name: myapp-pod
+labels:
+app: myapp
+type: front-end
