@@ -7,7 +7,7 @@ spec:
 name: myapp-replicaset
 labels:
 app: myapp
-type: front-end bata
+type: front-end-bata
 apps/v1
 metadata:
 name: myapp-pod
